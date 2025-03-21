@@ -15,7 +15,7 @@ namespace ChatApp_TARpe23_StenUesson.Net
             _client = new TcpClient();
         }
 
-        public void ConnectToServer()
+        public void ConnectToServer(string username)
         {
             if (!_client.Connected)
             {
