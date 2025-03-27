@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
+using ChatApp_TARpe23_StenUesson.Net.IO;
 
 namespace ChatApp_TARpe23_StenUesson.Net
 {
@@ -20,7 +21,13 @@ namespace ChatApp_TARpe23_StenUesson.Net
             if (!_client.Connected)
             {
                 _client.Connect("127.0.0.1", 7891);
+                var connectPacket = new PacketBuilder();
+                connectPacket.WriteOpCode(0);
+                connectPacket.WriteString(username);
+                _client.Client.Send(connectPacket.GetPacketBytes());
             }
         }
+
+        
     }
 }
