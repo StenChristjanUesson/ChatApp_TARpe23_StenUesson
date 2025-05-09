@@ -12,7 +12,6 @@ namespace ChatApp_TARpe23_StenUesson.Net
     {
         TcpClient _client;
         public PacketReader PacketReader;
-
         public event Action connectedEvent;
         public Server()
         {
@@ -39,7 +38,22 @@ namespace ChatApp_TARpe23_StenUesson.Net
 
         private void ReadPackets()
         {
-
+            Task.Run(() => 
+            {
+                while (true)
+                {
+                    var opcode = PacketReader.ReadByte();
+                    switch (opcode)
+                    {
+                        case 1:
+                            connectedEvent?.Invoke();
+                            break;
+                        default:
+                            Console.WriteLine("ah yes...");
+                            break;
+                    }
+                }
+            });
         }
     }
 }
