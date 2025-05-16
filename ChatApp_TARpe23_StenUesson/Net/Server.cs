@@ -13,6 +13,8 @@ namespace ChatApp_TARpe23_StenUesson.Net
         TcpClient _client;
         public PacketReader PacketReader;
         public event Action connectedEvent;
+        public event Action msgRecivedEvent;
+        public event Action userDisconnectEvent;
         public Server()
         {
             _client = new TcpClient();
@@ -48,6 +50,13 @@ namespace ChatApp_TARpe23_StenUesson.Net
                         case 1:
                             connectedEvent?.Invoke();
                             break;
+                        case 5:
+                            msgRecivedEvent?.Invoke();
+                            break;
+                        case 10:
+                            userDisconnectEvent?.Invoke();
+                            break;
+
                         default:
                             Console.WriteLine("ah yes...");
                             break;
@@ -61,6 +70,7 @@ namespace ChatApp_TARpe23_StenUesson.Net
             var messagePacket = new PacketBuilder();
             messagePacket.WriteOpCode(5);
             messagePacket.WriteMessage(message);
+            _client.Client.Send(messagePacket.GetPacketBytes());
         }
     }
 }
