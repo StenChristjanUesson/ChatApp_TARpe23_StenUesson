@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net.Http.Json;
 using System.Net.Sockets;
 using System.Threading.Tasks;
 
@@ -8,10 +9,19 @@ namespace ChatConsoleClient
     {
         static async Task Main(string[] args)
         {
-            Console.WriteLine("Sisesta oma nimi:");
+            Console.WriteLine("Sisesta oma kasutajanimi:");
             string username = Console.ReadLine();
+            Console.WriteLine("Sisesta oma parool:");
+            string password = Console.ReadLine();
 
-            var client = new Client("127.0.0.1", 5000);
+            string token = await GetJwtTokenAsync(username, password);
+            if (token == null)
+            {
+                Console.WriteLine("Programmi lõpetamine.");
+                return;
+            }
+
+            var client = new Client("127.0.0.1", 5000, token);
             await client.ConnectAsync();
             await client.SendAsync(username);
 
@@ -32,6 +42,22 @@ namespace ChatConsoleClient
                 await client.SendAsync(message);
             }
         }
+        private static async Task<string> GetJwtTokenAsync(string username, string password)
+        {
+            using var httpClient = new HttpClient();
+            var loginData = new { username, password };
+            var response = await httpClient.PostAsJsonAsync("http://localhost:5000/api/auth/login", loginData);
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<Dictionary<string, string>>();
+                return result["token"];
+            }
+            else
+            {
+                Console.WriteLine("Autentimine ebaõnnestus.");
+                return null;
+            }
+        }
     }
 }
 
@@ -41,11 +67,13 @@ public class Client
     private NetworkStream _stream;
     private readonly string _host;
     private readonly int _port;
+    private readonly string _token;
 
-    public Client(string host, int port)
+    public Client(string host, int port, string token)
     {
         _host = host;
         _port = port;
+        _token = token;
     }
 
     public async Task ConnectAsync()
@@ -53,6 +81,8 @@ public class Client
         _tcpClient = new TcpClient();
         await _tcpClient.ConnectAsync(_host, _port);
         _stream = _tcpClient.GetStream();
+
+        await SendAsync($"TOKEN:{_token}");
     }
 
     public async Task SendAsync(string message)
